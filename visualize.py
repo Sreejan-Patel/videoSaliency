@@ -89,9 +89,11 @@ def main():
     output_pred = args.output + '/pred'
     output_orig_gif = args.output + '/orig.gif'
     output_pred_gif = args.output + '/pred.gif'
-    combine_orig(args.orig_input, args.pred_input, output_orig)
+    pred_input = args.pred_input
+    ground_truth_input = args.orig_input + '/maps'
+    combine_orig(args.orig_input, ground_truth_input, output_orig)
     create_animation(output_orig, output_orig_gif)
-    combine(args.orig_input, args.pred_input, output_pred)
+    combine(args.orig_input, pred_input, output_pred)
     create_animation(output_pred, output_pred_gif)
 
 if __name__ == '__main__':
