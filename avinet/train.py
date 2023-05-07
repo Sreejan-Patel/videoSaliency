@@ -1,17 +1,18 @@
 import argparse
 import os
 import time
-
+import cv2 as cv
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 
+import sys
+sys.path.insert(0, '../')
 from util.dataloader import SoundDatasetLoader
 from util.loss import Loss
-from AViNet.avinet_model import AViNetModel
+from avinet.avinet_model import AViNetModel
 from util.utils import blur
-import cv2 as cv
-import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',

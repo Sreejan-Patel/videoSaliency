@@ -1,17 +1,18 @@
 import argparse
 import os
 import time
-
+import cv2 as cv
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 
+import sys
+sys.path.insert(0, '../')
 from util.dataloader import DHF1KDataset
 from util.loss import Loss
-from ViNet.vinet_model import ViNetModel
+from vinet.vinet_model import ViNetModel
 from util.utils import blur
-import cv2 as cv
-import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path',

@@ -6,7 +6,9 @@ import torch
 from PIL import Image
 import cv2 as cv
 
-from ViNet.vinet_model import ViNetModel
+import sys
+sys.path.insert(0, '../')
+from vinet.vinet_model import ViNetModel
 from util.utils import torch_transform_image, save_image, blur
 
 parser = argparse.ArgumentParser()

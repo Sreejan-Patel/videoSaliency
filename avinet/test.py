@@ -11,7 +11,9 @@ from os.path import join
 import torchaudio
 from PIL import Image
 
-from AViNet.avinet_model import AViNetModel
+import sys
+sys.path.insert(0, '../')
+from avinet.avinet_model import AViNetModel
 from util.utils import torch_transform_image, save_image, blur
 
 parser = argparse.ArgumentParser()

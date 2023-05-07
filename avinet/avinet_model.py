@@ -1,6 +1,8 @@
 import torch
 from torch import nn
-from ViNet.vinet_model import ViNetModel
+import sys
+sys.path.insert(0, '../')
+from vinet.vinet_model import ViNetModel
 
 class AViNetModel(nn.Module):
 	def __init__(self, model_type='vinet_conv'):
