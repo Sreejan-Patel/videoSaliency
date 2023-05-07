@@ -11,7 +11,7 @@ from utils import *
 from dataloader import DHF1KDataset
 from loss import Loss
 from vinet_model import ViNetModel
-from vinet_train import prepare_sample
+from loss_utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path',
@@ -40,7 +40,6 @@ def main():
     path_train = args.train_data_path
     path_validate = args.validation_data_path
     path_output = args.output_path
-    path_loss = args.loss_file
     # path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -58,7 +57,7 @@ def main():
 
     print(f'Loading encoder network weights from {file_weight}...')
     weight_dict = torch.load(file_weight)
-    model_dict = model.encoder.state_dict()
+    model_dict = model.backbone.state_dict()
     for name, param in weight_dict.items():
         if 'module' in name:
             name = '.'.join(name.split('.')[1:])
@@ -82,7 +81,7 @@ def main():
         else:
             print(' name? ' + name)
 
-    model.encoder.load_state_dict(model_dict)
+    model.backbone.load_state_dict(model_dict)
     print(' Encoder network weights loaded!')
 
 
@@ -129,6 +128,8 @@ def train(model, loader, optimizer, criterion, epoch, device):
     model.train()
     start_time = time.time()
     loss_sum, sim_sum, nss_sum, auc_sum = 0, 0, 0, 0
+    total_loss = AverageMeter()
+    curr_loss = AverageMeter()
     num_samples = len(loader)
 
     for (idx, sample) in enumerate(loader):
@@ -140,9 +141,13 @@ def train(model, loader, optimizer, criterion, epoch, device):
         assert prediction.size() == gt.size()
 
         loss, loss_sim, loss_nss = criterion(prediction, gt, fixations)
+        los = loss_func(prediction, gt)
+        loss.backward()
         loss.backward()
         optimizer.step()
-        print(f'   loss: {loss.item():.3f}, SIM: {loss_sim:.3f}, NSS: {loss_nss:.3f}')
+        total_loss.update(loss.item())
+        curr_loss.update(loss.item())
+        
         loss_sum += loss.item()
         # auc_sum += loss_auc.item()
         sim_sum += loss_sim.item()
@@ -158,6 +163,7 @@ def train(model, loader, optimizer, criterion, epoch, device):
           # f'AUC: {avg_auc:.3f}\n'
           f'NSS: {avg_nss:.3f}\n'
           f'training time: {((time.time() - start_time) / 60):.2f} minutes')
+    print('[{:2d}, train] avg_loss : {:.5f}'.format(epoch, total_loss.avg))
     return avg_loss, avg_sim, avg_nss
 
 
