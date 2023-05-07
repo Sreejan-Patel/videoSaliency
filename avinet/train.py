@@ -7,12 +7,8 @@ import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 
-import sys
-sys.path.insert(0, '../')
-from util.dataloader import SoundDatasetLoader
-from util.loss import Loss
-from avinet.avinet_model import AViNetModel
-from util.utils import blur
+from util import dataloader, loss, utils
+from avinet import avinet_model
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path',
@@ -42,11 +38,11 @@ def main():
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
 
-    model = AViNetModel(model_type=args.type)
+    model = avinet_model.AViNetModel(model_type=args.type)
 
     # load dataset
-    train_dataset = SoundDatasetLoader(path_train, len_temporal, args.dataset)
-    val_dataset = SoundDatasetLoader(path_validate, len_temporal, args.dataset, mode='test')
+    train_dataset = dataloader.SoundDatasetLoader(path_train, len_temporal, args.dataset)
+    val_dataset = dataloader.SoundDatasetLoader(path_validate, len_temporal, args.dataset, mode='test')
 
     # load the weight file for encoder network
     file_weight = args.vinet_weights_file
@@ -65,7 +61,7 @@ def main():
     params = list(filter(lambda p: p.requires_grad, model.parameters())) 
 
     optimizer = torch.optim.Adam(params, lr=1e-4)
-    criterion = Loss()
+    criterion = loss.Loss()
 
     # create data loaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -146,7 +142,7 @@ def validate(model, loader, criterion, epoch, device):
             gt = gt.squeeze(0).numpy()
             prediction = prediction.cpu().squeeze(0).detach().numpy()
             prediction = cv.resize(prediction, (gt.shape[1], gt.shape[0]))
-            prediction = blur(prediction).unsqueeze(0).cuda()
+            prediction = utils.blur(prediction).unsqueeze(0).cuda()
             gt = torch.FloatTensor(gt).unsqueeze(0).cuda()
             assert prediction.size() == gt.size()
 

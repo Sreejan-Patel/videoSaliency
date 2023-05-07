@@ -6,10 +6,8 @@ import torch
 from PIL import Image
 import cv2 as cv
 
-import sys
-sys.path.insert(0, '../')
-from vinet.vinet_model import ViNetModel
-from util.utils import torch_transform_image, save_image, blur
+from vinet import vinet_model
+from util import utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('weight_file', default='', type=str, help='path to pretrained model state dict file')
@@ -35,7 +33,7 @@ def main():
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
 
-    model = ViNetModel(model_type=args.type)
+    model = vinet_model.ViNetModel(model_type=args.type)
     model.load_state_dict(torch.load(file_weight))
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -62,7 +60,7 @@ def main():
         for i in range(len(list_frames)):
             img = Image.open(os.path.join(path_input, data_name, 'images', list_frames[i])).convert('RGB')
             img_size = img.size
-            img = torch_transform_image(img)
+            img = utils.torch_transform_image(img)
 
             snippet.append(img)
 
@@ -93,9 +91,9 @@ def process_image(model, device, clip, data_name, frame_no, save_path, img_size)
 
     pred = pred.numpy()
     pred = cv.resize(pred, (img_size[0], img_size[1]))
-    pred = blur(pred)
+    pred = utils.blur(pred)
 
-    save_image(pred, os.path.join(save_path, data_name, frame_no), normalize=True)
+    utils.save_image(pred, os.path.join(save_path, data_name, frame_no), normalize=True)
 
 
 if __name__ == '__main__':

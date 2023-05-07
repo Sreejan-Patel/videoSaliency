@@ -2,12 +2,12 @@ import torch
 from torch import nn
 import sys
 sys.path.insert(0, '../')
-from vinet.vinet_model import ViNetModel
+from vinet import vinet_model
 
 class AViNetModel(nn.Module):
 	def __init__(self, model_type='vinet_conv'):
 		super(AViNetModel, self).__init__()
-		self.visual_model = ViNetModel(model_type=model_type)
+		self.visual_model = vinet_model.ViNetModel(model_type=model_type)
 
 		self.audionet = SoundNet()
 		self.audionet.load_state_dict(torch.load('./soundnet8_final.pth'))

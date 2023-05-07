@@ -7,12 +7,8 @@ import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 
-import sys
-sys.path.insert(0, '../')
-from util.dataloader import DHF1KDataset
-from util.loss import Loss
-from vinet.vinet_model import ViNetModel
-from util.utils import blur
+from util import dataloader, loss, utils
+from vinet import vinet_model 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path',
@@ -46,11 +42,11 @@ def main():
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
 
-    model = ViNetModel(model_type=args.type)
+    model = vinet_model.ViNetModel(model_type=args.type)
 
     # load dataset
-    train_dataset = DHF1KDataset(path_train, len_temporal)
-    validation_dataset = DHF1KDataset(path_validate, len_temporal, mode='validate')
+    train_dataset = dataloader.DHF1KDataset(path_train, len_temporal)
+    validation_dataset = dataloader.DHF1KDataset(path_validate, len_temporal, mode='validate')
 
     # load the weight file for encoder network
     file_weight = args.S3D_weights_file
@@ -98,7 +94,7 @@ def main():
     params = list(filter(lambda p: p.requires_grad, model.parameters())) 
 
     optimizer = torch.optim.Adam(params, lr=1e-4)
-    criterion = Loss()
+    criterion = loss.Loss()
 
     # create data loaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -178,7 +174,7 @@ def validate(model, loader, criterion, epoch, device):
             gt = gt.squeeze(0).numpy()
             prediction = prediction.cpu().squeeze(0).detach().numpy()
             prediction = cv.resize(prediction, (gt.shape[1], gt.shape[0]))
-            prediction = blur(prediction).unsqueeze(0).cuda()
+            prediction = utils.blur(prediction).unsqueeze(0).cuda()
             gt = torch.FloatTensor(gt).unsqueeze(0).cuda()
             assert prediction.size() == gt.size()
 

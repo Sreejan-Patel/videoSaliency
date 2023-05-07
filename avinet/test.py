@@ -11,10 +11,8 @@ from os.path import join
 import torchaudio
 from PIL import Image
 
-import sys
-sys.path.insert(0, '../')
-from avinet.avinet_model import AViNetModel
-from util.utils import torch_transform_image, save_image, blur
+from avinet import avinet_model
+from util import utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('weight_file', default='', type=str, help='path to pretrained model state dict file')
@@ -42,7 +40,7 @@ def main():
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
 
-    model = AViNetModel(model_type=args.type)
+    model = avinet_model.AViNetModel(model_type=args.type)
     model.load_state_dict(torch.load(file_weight))
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -85,7 +83,7 @@ def main():
         for i in range(len(list_frames)):
             img = Image.open(os.path.join(path_input, 'video_frames', dataset, data_name, list_frames[i])).convert('RGB')
             img_size = img.size
-            img = torch_transform_image(img)
+            img = utils.torch_transform_image(img)
 
             snippet.append(img)
 
@@ -101,16 +99,6 @@ def main():
                     process_image(model, device, torch.flip(clip, [2]), data_name, list_frames[i-len_temporal+1], path_output, img_size, audio_feature=audio_feature)
 
                 del snippet[0]
-
-def process(model, clip, path_inpdata, dname, frame_no, args, img_size, audio_feature=None, device='cpu'):
-	with torch.no_grad():
-			smap = model(clip.to(device), audio_feature.to(device)).cpu().data[0]
-	
-	smap = smap.numpy()
-	smap = cv.resize(smap, (img_size[0], img_size[1]))
-	smap = blur(smap)
-
-	save_image(smap, os.path.join(args.path_outdata, dname, frame_no), args.dataset)
  
 def process_image(model, device, clip, data_name, frame_no, save_path, img_size, audio_feature=None):
     with torch.no_grad():
@@ -118,9 +106,9 @@ def process_image(model, device, clip, data_name, frame_no, save_path, img_size,
 
     pred = pred.numpy()
     pred = cv.resize(pred, (img_size[0], img_size[1]))
-    pred = blur(pred)
+    pred = utils.blur(pred)
 
-    save_image(pred, os.path.join(save_path, data_name, frame_no), normalize=True)
+    utils.save_image(pred, os.path.join(save_path, data_name, frame_no), normalize=True)
     
 def read_sal_text(txt_file):
 	test_list = {'names': [], 'nframes': [], 'fps': []}

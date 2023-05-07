@@ -6,10 +6,9 @@ import torch
 from PIL import Image
 import cv2 as cv
 
-from ViNet.vinet_model import ViNetModel
+from vinet import vinet_model, train
 from loss import Loss
 from dataloader import DHF1KDataset
-from ViNet.train import prepare_sample
 from torch.utils.data import DataLoader
 from utils import  blur
 
@@ -27,7 +26,7 @@ def evaluate():
     args = parser.parse_args()
 
     len_temporal = 32
-    model = ViNetModel()
+    model = vinet_model.ViNetModel()
     model.load_state_dict(torch.load(args.weights))
 
 
@@ -58,7 +57,7 @@ def evaluate():
         for (idx, sample) in enumerate(loader):
             start_time = time.time()
             print(f' Processing sample {idx + 1}...')
-            clips, gt, fixations = prepare_sample(sample, device, gt_to_device=False)
+            clips, gt, fixations = train.prepare_sample(sample, device, gt_to_device=False)
 
             prediction = model(clips)
             if eval_criterion == 'metrics':
