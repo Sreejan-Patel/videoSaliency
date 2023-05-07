@@ -11,7 +11,6 @@ from utils import *
 from dataloader import DHF1KDataset
 from loss import Loss
 from vinet_model import ViNetModel
-from loss_utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_path',
@@ -128,12 +127,9 @@ def train(model, loader, optimizer, criterion, epoch, device):
     model.train()
     start_time = time.time()
     loss_sum, sim_sum, nss_sum, auc_sum = 0, 0, 0, 0
-    total_loss = AverageMeter()
-    curr_loss = AverageMeter()
     num_samples = len(loader)
 
     for (idx, sample) in enumerate(loader):
-        print(f' TRAIN: Processing sample {idx + 1}...')
         clips, gt, fixations = prepare_sample(sample, device, gt_to_device=True)
         optimizer.zero_grad()
 
@@ -141,12 +137,9 @@ def train(model, loader, optimizer, criterion, epoch, device):
         assert prediction.size() == gt.size()
 
         loss, loss_sim, loss_nss = criterion(prediction, gt, fixations)
-        los = loss_func(prediction, gt)
         loss.backward()
         loss.backward()
         optimizer.step()
-        total_loss.update(loss.item())
-        curr_loss.update(loss.item())
         
         loss_sum += loss.item()
         # auc_sum += loss_auc.item()
@@ -163,7 +156,6 @@ def train(model, loader, optimizer, criterion, epoch, device):
           # f'AUC: {avg_auc:.3f}\n'
           f'NSS: {avg_nss:.3f}\n'
           f'training time: {((time.time() - start_time) / 60):.2f} minutes')
-    print('[{:2d}, train] avg_loss : {:.5f}'.format(epoch, total_loss.avg))
     return avg_loss, avg_sim, avg_nss
 
 
