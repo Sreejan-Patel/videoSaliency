@@ -31,13 +31,38 @@ class Loss(nn.Module):
         loss_sim = self.similarity(pred, gt).cpu()
         loss_nss = self.nss(pred, fix).cpu()
         loss = torch.FloatTensor([0.0]).cpu()
-        loss -= loss_sim
-        loss -= loss_nss
+        loss = self.kldiv(pred, gt).cpu()
         if self.mode == 'evaluate':
             loss_auc = self.auc_Judd(pred, fix)
             loss_cc = self.cc(pred, gt)
             return loss_sim, loss_nss, loss_auc, loss_cc
         return loss, loss_sim, loss_nss
+    
+    def kldiv(self, s_map, gt):
+        assert s_map.size() == gt.size()
+        batch_size = s_map.size(0)
+        w = s_map.size(1)
+        h = s_map.size(2)
+
+        sum_s_map = torch.sum(s_map.view(batch_size, -1), 1)
+        expand_s_map = sum_s_map.view(batch_size, 1, 1).expand(batch_size, w, h)
+        
+        assert expand_s_map.size() == s_map.size()
+
+        sum_gt = torch.sum(gt.view(batch_size, -1), 1)
+        expand_gt = sum_gt.view(batch_size, 1, 1).expand(batch_size, w, h)
+        
+        assert expand_gt.size() == gt.size()
+
+        s_map = s_map/(expand_s_map*1.0)
+        gt = gt / (expand_gt*1.0)
+
+        s_map = s_map.view(batch_size, -1)
+        gt = gt.view(batch_size, -1)
+
+        eps = 2.2204e-16
+        result = gt * torch.log(eps + gt/(s_map + eps))
+        return torch.mean(torch.sum(result, 1))
     
     def similarity(self, pred, gt):
         pred = pred.cuda()

@@ -138,7 +138,6 @@ def train(model, loader, optimizer, criterion, epoch, device):
 
         loss, loss_sim, loss_nss = criterion(prediction, gt, fixations)
         loss.backward()
-        loss.backward()
         optimizer.step()
         
         loss_sum += loss.item()

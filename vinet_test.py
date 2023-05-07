@@ -10,7 +10,7 @@ from vinet_model import ViNetModel
 from utils import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('weight_file', default='', type=str, help='path to pretrained model state dict file')
+parser.add_argument('--weight_file', default='', type=str, help='path to pretrained model state dict file')
 parser.add_argument('--type', default='vinet_conv', type=str, help='type of model')
 parser.add_argument('--test_data_path',
                     default='/scratch/smai/test',

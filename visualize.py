@@ -1,70 +1,98 @@
 import numpy as np
 from PIL import Image
 import os
+import cv2 as cv
+import argparse
 
 
-def plot(file, x_label, y_label, title=''):
-    import matplotlib.pyplot as plt
-    import math
-    results = np.load(file)
-    n_epochs = results.shape[0]
-    x = np.linspace(1, n_epochs, n_epochs)
-    y = results[:, 2]
+def combine(path_orig, path_sal, output_path):
+    # create the output directory if it doesn't exist
+    if not os.path.isdir(output_path):
+        os.makedirs(output_path)
 
-    plt.plot(x, y)
-    plt.title(title)
-    new_list = range(math.floor(min(x)) - 1, math.ceil(max(x)) + 2, 2)
-    plt.xticks(new_list)
+    # iterate over the original images
+    for filename in os.listdir(os.path.join(path_orig, 'images')):
+        # read the original image
+        img_orig = cv.imread(os.path.join(path_orig, 'images', filename))
 
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
+        # read the corresponding saliency map
+        sal_path = os.path.join(path_sal, filename)
+        if not os.path.exists(sal_path):
+            continue
+        img_sal = cv.imread(sal_path)
 
-    plt.savefig(f'plot_{file.split(".")[0]}.png')
-    plt.show()
-
-
-def combine(path_orig, path_sal):
-    import cv2 as cv
-
-    names = os.listdir(os.path.join(path_orig, 'images'))
-
-    path_out = os.path.join(path_sal, 'visual')
-    if not os.path.isdir(path_out):
-        os.makedirs(path_out)
-
-    for name in names:
-        img_orig = cv.imread(os.path.join(path_orig, 'images', name))
-        img_sal = cv.imread(os.path.join(path_sal, name))
+        # remove the blue and green channels from the saliency map
         img_sal[:, :, 0] = 0
         img_sal[:, :, 1] = 0
 
+        # combine the original image with the saliency map
         out = cv.addWeighted(img_orig, 1.0, img_sal, 1.0, 0.0)
-        # cv.imshow('with saliency', out)
-        # cv.waitKey(0)
-        cv.imwrite(os.path.join(path_out, name), out)
 
-    names = os.listdir(path_out)
-    images = []
-    for name in names:
-        images.append(Image.open(os.path.join(path_out, name)))
-    images[0].save(os.path.join(path_out, 'video.gif'), save_all=True, append_images=images[1:])
+        # save the output image
+        output_filename = filename.replace('.png', '_combined.png')
+        output_pathname = os.path.join(output_path, output_filename)
+        cv.imwrite(output_pathname, out)
+    
+def combine_orig(path_orig, path_sal, output_path):
+    # create the output directory if it doesn't exist
+    if not os.path.isdir(output_path):
+        os.makedirs(output_path)
 
+    # iterate over the original images
+    for filename in os.listdir(os.path.join(path_orig, 'images')):
+        # read the original image
+        img_orig = cv.imread(os.path.join(path_orig, 'images', filename))
 
-def stack(pred, gt, start_idx, length, step):
-    files = [name for name in os.listdir(pred)[start_idx: start_idx + (step * length): step]]
-    images_1 = []
-    images_2 = []
-    for file in files:
-        images_1.append(Image.open(os.path.join(pred, file)))
-        images_2.append(Image.open(os.path.join(gt, file)))
-    images_stack_1 = np.hstack(images_1)
-    images_stack_2 = np.hstack(images_2)
-    out = np.vstack(np.asarray([images_stack_1, images_stack_2]))
-    out = Image.fromarray(out)
-    out.save(os.path.join(pred, 'compare.jpg'))
+        # read the corresponding saliency map
+        sal_path = os.path.join(path_sal, filename)
+        if not os.path.exists(sal_path):
+            continue
+        img_sal = cv.imread(sal_path)
 
+        # remove the blue and green channels from the saliency map
+        img_sal[:, :, 0] = 0
+        img_sal[:, :, 1] = 0
+
+        # combine the original image with the saliency map
+        out = cv.addWeighted(img_orig, 1.0, img_sal, 1.0, 0.0)
+
+        # save the output image
+        output_filename = filename.replace('.png', '_combined.png')
+        output_pathname = os.path.join(output_path, output_filename)
+        cv.imwrite(output_pathname, out)
+
+def create_animation(input_folder, output_filename, frame_duration=100):
+    # Get a list of the image files in the input folder
+    image_files = [f for f in os.listdir(input_folder) if os.path.isfile(os.path.join(input_folder, f))]
+    
+    # Sort the image files alphabetically
+    image_files.sort()
+    
+    # Open the first image to get the image size
+    with Image.open(os.path.join(input_folder, image_files[0])) as img:
+        width, height = img.size
+    
+    # Create a new list of Image objects from the image files
+    images = [Image.open(os.path.join(input_folder, f)).resize((width, height)) for f in image_files]
+    
+    # Save the GIF animation
+    images[0].save(output_filename, format='GIF', append_images=images[1:], save_all=True, duration=frame_duration, loop=0)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--pred_input', type=str)
+parser.add_argument('--orig_input', type=str)
+parser.add_argument('--output', type=str)
+
+def main():
+    args = parser.parse_args()
+    output_orig = args.output + '/orig'
+    output_pred = args.output + '/pred'
+    output_orig_gif = args.output + '/orig.gif'
+    output_pred_gif = args.output + '/pred.gif'
+    combine_orig(args.orig_input, args.pred_input, output_orig)
+    create_animation(output_orig, output_orig_gif)
+    combine(args.orig_input, args.pred_input, output_pred)
+    create_animation(output_pred, output_pred_gif)
 
 if __name__ == '__main__':
-    stack('E:/Szkolne/Praca_magisterska/projekt/result/sim_model/0601/visual',
-          'E:/Szkolne/Praca_magisterska/projekt/result/sim_model/0601/ground_truth',
-          492, 3, 8)
+    main()

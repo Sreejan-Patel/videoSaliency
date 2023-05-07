@@ -15,7 +15,7 @@ from avinet_model import AViNetModel
 from utils import torch_transform_image, blur, save_image
 
 parser = argparse.ArgumentParser()
-parser.add_argument('weight_file', default='', type=str, help='path to pretrained model state dict file')
+parser.add_argument('--weight_file', default='', type=str, help='path to pretrained model state dict file')
 parser.add_argument('--type', default='vinet_conv', type=str, help='type of model')
 parser.add_argument('--dataset', default='DIEM', type=str, help='dataset name')
 parser.add_argument('--test_data_path',
