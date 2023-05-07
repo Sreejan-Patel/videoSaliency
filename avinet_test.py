@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--weight_file', default='', type=str, help='path to pretrained model state dict file')
 parser.add_argument('--type', default='vinet_conv', type=str, help='type of model')
 parser.add_argument('--dataset', default='DIEM', type=str, help='dataset name')
-parser.add_argument('--test_data_path',
+parser.add_argument('--data_path',
                     default='/scratch/sound_data',
                     type=str,
                     help='path to testing data')
